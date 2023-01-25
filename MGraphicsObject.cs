@@ -12,8 +12,6 @@ namespace MathCS
         private static List<MGraphicsObject> _objects = new List<MGraphicsObject>();
         public static List<MGraphicsObject> GraphicsObjects { get { return _objects; } private set { _objects = value; } }
         private int index;
-
-        public virtual Vector2i Position { get; set; }
         public MWindow Window { get; set; }   
         /// <summary>
         /// Where the position of whatever is drawn is relative to (i.e. MAnchor.Right would cause a rectangle centered at (0, 0) to be drawn at the right edge of the screen.)
@@ -25,9 +23,8 @@ namespace MathCS
         public bool Visible { get => visible; set { visible = value; } }
         public List<MGraphicsObject> Children { get; set; }
 
-        public MGraphicsObject(Vector2i position, MWindow window, MAnchor anchor, int anchorBorder, MColor drawColor)
+        public MGraphicsObject(MWindow window, MAnchor anchor, int anchorBorder, MColor drawColor)
         {
-            Position = position;
             Window = window;
             Anchor = anchor;
             AnchorBorder = anchorBorder;
@@ -55,14 +52,10 @@ namespace MathCS
             index = -1;
         }
 
-        /// <summary>
-        /// Returns the position of this <see cref="MGraphicsObject"/>, modified by its anchor and anchor border.
-        /// </summary>
-        public Vector2i AnchoredPosition()
+        protected Vector2i AnchorPosition()
         {
-            return Position + Window.PositionOfAnchor(Anchor, AnchorBorder);
+            return Window.PositionOfAnchor(Anchor, AnchorBorder);
         }
-
         public abstract void Draw();
     }
 }

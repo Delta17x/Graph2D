@@ -10,6 +10,7 @@ namespace MathCS.MShapes
 {
     public class MCircularRing : MGraphicsObject
     {
+        public Vector2i Position { get; set; }
         public int InnerRadius { get; set; }
         public int OuterRadius { get; set; }
 
@@ -17,11 +18,12 @@ namespace MathCS.MShapes
         {
             InnerRadius = innerRadius;
             OuterRadius = outerRadius;
+            Anchor = MAnchor.Center;
         }
 
         public override void Draw()
         {
-            CircleRing(AnchoredPosition(), InnerRadius, OuterRadius, DrawColor);
+            CircleRing(Position + AnchorPosition(), InnerRadius, OuterRadius, DrawColor);
         }
 
         private void CircleRing(Vector2i center, int innerRadius, int outerRadius, MColor color)
@@ -36,7 +38,7 @@ namespace MathCS.MShapes
                     {
                         float L = (center - new Vector2i(i, j)).EuclideanLength;
                         if (innerRadius <= L && L <= outerRadius)
-                            Window.Screen[i][j] = color;
+                            Window[i, j] = color;
                     }
                 }
             }
@@ -48,7 +50,7 @@ namespace MathCS.MShapes
                     {
                         float L = (center - new Vector2i(i, j)).EuclideanLength;
                         if (Window.IsOnScreen(new(i, j)) && innerRadius <= L && L <= outerRadius)
-                            Window.Screen[i][j] = color;
+                            Window[i, j] = color;
                     }
                 }
             }

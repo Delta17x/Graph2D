@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Reflection.Metadata.Ecma335;
 using static MathCS.MWindow;
 
 namespace MathCS
@@ -17,17 +18,24 @@ namespace MathCS
 
         private int fboID;
 
-        // Array of MColors which represent the screen pixels. Stored in (x, y) form. (0, 0) is the bottom left of the screen.
-        public MColor[][] Screen { get; set; }
+        public MColor[] screenBuffer;
 
         public MColor Background { get; set; } = MColor.White;
 
         public MWindow(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title })
         {
-            Screen = new MColor[width][];
-            for (int i = 0; i < Screen.Length; i++)
+            screenBuffer = new MColor[width * height];
+        }
+
+        public MColor this[int i, int j]
+        {
+            get
             {
-                Screen[i] = new MColor[height];
+                return screenBuffer[j * Size.X + i];
+            }
+            set
+            {
+                screenBuffer[j * Size.X + i] = value;
             }
         }
 
@@ -36,11 +44,6 @@ namespace MathCS
             for (int i = 0; i < MGraphicsObject.GraphicsObjects.Count; i++)
             {              
                 var obj = MGraphicsObject.GraphicsObjects[i];
-                for (int j = 0; j < obj.Children.Count; j++)
-                {
-                    var child = obj.Children[j];
-                    child.Position = obj.Position;
-                }
                 if (obj.Visible)
                     obj.Draw();
             }
@@ -82,20 +85,17 @@ namespace MathCS
             base.OnRenderFrame(e);
             HandleMGraphicObjects();
 
-            float[] temp = new float[Size.X * Size.Y * 3];
-            //for (int i = 0; i < Size.X * Size.Y; i++)
-            Parallel.For(0, Size.X * Size.Y, (i) =>
+            unsafe 
             {
-                MColor color = Screen[i % Screen.Length][i / Screen.Length];
-                temp[3 * i] = color.R;
-                temp[3 * i + 1] = color.G;
-                temp[3 * i + 2] = color.B;
-                Screen[i % Screen.Length][i / Screen.Length] = Background;
-            });
-
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Size.X, Size.Y, 0, PixelFormat.Rgb, PixelType.Float, temp);
-            GL.FramebufferTexture2D(FramebufferTarget.ReadFramebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texID, 0);
+                fixed (MColor* p = &screenBuffer[0])
+                {
+                    float* p2 = (float*)p;
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Size.X, Size.Y, 0, PixelFormat.Rgb, PixelType.Float, (IntPtr)p2);
+                }
+            }
+            //GL.FramebufferTexture2D(FramebufferTarget.ReadFramebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texID, 0);
             GL.BlitFramebuffer(0, 0, Size.X, Size.Y, 0, 0, Size.X, Size.Y, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
+            Array.Fill(screenBuffer, Background);
             SwapBuffers();
         }
 
@@ -104,14 +104,10 @@ namespace MathCS
             base.OnResize(e);
 
             GL.Viewport(0, 0, Size.X, Size.Y);
-            Screen = new MColor[Size.X][];
-            for (int i = 0; i < Screen.Length; i++)
+            screenBuffer = new MColor[Size.X * Size.Y];
+            for (int i = 0; i < screenBuffer.Length; i++)
             {
-                Screen[i] = new MColor[Size.Y];
-                for (int j = 0; j < Screen[0].Length; j++)
-                {
-                    Screen[i][j] = Background;
-                }
+                screenBuffer[i] = Background;
             }
         }
 
@@ -135,6 +131,11 @@ namespace MathCS
         }
 
         public bool IsOnScreen(int x, int y)
+        {
+            return x > 0 && y > 0 && x < Size.X && y < Size.Y;
+        }
+
+        public bool IsOnScreen(float x, float y)
         {
             return x > 0 && y > 0 && x < Size.X && y < Size.Y;
         }

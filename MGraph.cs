@@ -22,6 +22,9 @@ namespace MathCS
         public Vector2i Size { get; set; }
 
         public float Scale { get; set; }
+        
+        public Vector2i Position { get; set; }
+
 
         private List<DrawTask> DrawTasks { get; set; } = new List<DrawTask>();
 
@@ -58,7 +61,7 @@ namespace MathCS
                     if (vec2.X > -Size.X * 0.5f && vec2.X < Size.X * 0.5f && 
                         vec2.Y > -Size.Y * 0.5f && vec2.Y < Size.X * 0.5f)
                     {
-                        PointDraw(new Vector2i((int)vec2.X, (int)vec2.Y) + AnchoredPosition(), this);
+                        PointDraw(new Vector2i((int)vec2.X, (int)vec2.Y) + Position + AnchorPosition(), this);
                     }
                    
 
